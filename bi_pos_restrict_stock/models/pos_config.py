@@ -37,7 +37,7 @@ class Product(models.Model):
 	def _compute_avail_locations(self):
 		for rec in self:
 			final_data = {}
-			rec.quant_text = json.dumps(final_data)
+			rec.sudo().quant_text = json.dumps(final_data)
 			if rec.type == 'product':
 				quants = self.env['stock.quant'].sudo().search(
 					[('product_id', 'in', rec.ids), ('location_id.usage', '=', 'internal')])
@@ -72,7 +72,7 @@ class Product(models.Model):
 						final_data[loc][2] = last_qty + inc.product_qty
 					else:
 						final_data[loc] = [0, 0, inc.product_qty]
-				rec.quant_text = json.dumps(final_data)
+				rec.sudo().quant_text = json.dumps(final_data)
 		return True
 
 class PosSession(models.Model):
