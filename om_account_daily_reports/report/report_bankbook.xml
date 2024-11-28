@@ -34,12 +34,37 @@
 
 
                     </div>
+                    <!--                    &lt;!&ndash; Operating Units Section &ndash;&gt;-->
+                    <!--<t t-if="data.get('operating_unit_ids')">-->
+                    <!--    <div class="row">-->
+                    <!--        <div class="col-3">-->
+                    <!--            <strong>Operating Units:</strong>-->
+                    <!--        </div>-->
+                    <!--        <div class="col-9">-->
+                    <!--            <t t-set="operating_units" t-value="env['operating.unit'].browse(data.get('operating_unit_ids'))"/>-->
+                    <!--            <t t-esc="', '.join(operating_units.mapped('name'))"/>-->
+                    <!--        </div>-->
+                    <!--    </div>-->
+                    <!--</t>-->
                     <div class="col-2">
                         <strong>Target Moves:</strong>
                         <p t-if="data['target_move'] == 'all'">All Entries</p>
                         <p t-if="data['target_move'] == 'posted'">Posted Entries</p>
                     </div>
                 </div>
+                 <t t-if="data.get('operating_unit_ids')">
+                            <div class="col-12">
+                                <div style="width:70%;">
+                                    <strong>Operating Unit:</strong>
+                                    <p>
+                                        <t t-set="operating_units"
+                                           t-value="env['operating.unit'].browse(data.get('operating_unit_ids'))"/>
+                                        <t t-esc="', '.join(operating_units.mapped('name'))"/>
+
+                                    </p>
+                                </div>
+                            </div>
+                        </t>
                 <br/>
 
                 <table class="table table-sm table-reports">

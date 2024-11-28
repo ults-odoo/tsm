@@ -11,32 +11,41 @@ class ReportBankBook(models.AbstractModel):
 
     def _get_account_move_entry(self, accounts, init_balance, sortby, display_account):
         """
-               :param:
-                       accounts: the recordset of accounts
-                       init_balance: boolean value of initial_balance
-                       sortby: sorting by date or partner and journal
-                       display_account: type of account(receivable, payable and both)
+        :param:
+                accounts: the recordset of accounts
+                init_balance: boolean value of initial_balance
+                sortby: sorting by date or partner and journal
+                display_account: type of account(receivable, payable and both)
 
-               Returns a dictionary of accounts with following key and value {
-                       'code': account code,
-                       'name': account name,
-                       'debit': sum of total debit amount,
-                       'credit': sum of total credit amount,
-                       'balance': total balance,
-                       'amount_currency': sum of amount_currency,
-                       'move_lines': list of move line
-               }
-               """
+        Returns a dictionary of accounts with following key and value {
+                'code': account code,
+                'name': account name,
+                'debit': sum of total debit amount,
+                'credit': sum of total credit amount,
+                'balance': total balance,
+                'amount_currency': sum of amount_currency,
+                'move_lines': list of move line
+        }
+        """
         cr = self.env.cr
         MoveLine = self.env['account.move.line']
         move_lines = {x: [] for x in accounts.ids}
 
+        # Get operating unit ids from context
+        operating_unit_ids = self.env.context.get('operating_unit_ids', [])
         # Prepare initial sql query and Get the initial move lines
         if init_balance:
-            init_tables, init_where_clause, init_where_params = MoveLine.with_context(date_from=self.env.context.get('date_from'), date_to=False,initial_bal=True)._query_get()
+            init_tables, init_where_clause, init_where_params = MoveLine.with_context(
+                date_from=self.env.context.get('date_from'), date_to=False, initial_bal=True)._query_get()
             init_wheres = [""]
             if init_where_clause.strip():
                 init_wheres.append(init_where_clause.strip())
+
+            # Add operating unit filter if provided
+            if operating_unit_ids:
+                init_wheres.append("m.operating_unit_id IN %s")
+                init_where_params += (tuple(operating_unit_ids),)
+
             init_filters = " AND ".join(init_wheres)
             filters = init_filters.replace('account_move_line__move_id', 'm').replace('account_move_line', 'l')
             sql = ("""
@@ -67,6 +76,12 @@ class ReportBankBook(models.AbstractModel):
         wheres = [""]
         if where_clause.strip():
             wheres.append(where_clause.strip())
+
+        # Add operating unit filter if provided
+        if operating_unit_ids:
+            wheres.append("m.operating_unit_id IN %s")
+            where_params += (tuple(operating_unit_ids),)
+
         filters = " AND ".join(wheres)
         filters = filters.replace('account_move_line__move_id', 'm').replace('account_move_line', 'l')
         if not accounts:

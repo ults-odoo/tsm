@@ -40,6 +40,19 @@
                         <p t-if="data['target_move'] == 'posted'">Posted Entries</p>
                     </div>
                 </div>
+                 <t t-if="data.get('operating_unit_ids')">
+                            <div class="col-12">
+                                <div style="width:70%;">
+                                    <strong>Operating Unit:</strong>
+                                    <p>
+                                        <t t-set="operating_units"
+                                           t-value="env['operating.unit'].browse(data.get('operating_unit_ids'))"/>
+                                        <t t-esc="', '.join(operating_units.mapped('name'))"/>
+
+                                    </p>
+                                </div>
+                            </div>
+                        </t>
                 <br/>
 
                 <table class="table table-sm table-reports">

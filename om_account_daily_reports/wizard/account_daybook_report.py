@@ -8,6 +8,9 @@ class AccountDayBookReport(models.TransientModel):
     _name = "account.daybook.report"
     _description = "Day Book Report"
 
+    operating_unit_ids = fields.Many2many(
+        comodel_name="operating.unit",
+    )
     date_from = fields.Date(string='Start Date', default=date.today(), required=True)
     date_to = fields.Date(string='End Date', default=date.today(), required=True)
     target_move = fields.Selection([('posted', 'Posted Entries'),
@@ -24,11 +27,12 @@ class AccountDayBookReport(models.TransientModel):
         result['state'] = 'target_move' in data['form'] and data['form']['target_move'] or ''
         result['date_from'] = data['form']['date_from']
         result['date_to'] = data['form']['date_to']
+        result['operating_unit_ids'] = data['form'].get('operating_unit_ids', [])
         return result
 
     def check_report(self):
         data = {}
-        data['form'] = self.read(['target_move', 'date_from', 'date_to', 'journal_ids', 'account_ids'])[0]
+        data['form'] = self.read(['target_move', 'date_from', 'date_to', 'journal_ids', 'account_ids', 'operating_unit_ids'])[0]
         comparison_context = self._build_comparison_context(data)
         data['form']['comparison_context'] = comparison_context
         return self.env.ref(

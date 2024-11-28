@@ -26,6 +26,9 @@ class AccountBankBookReport(models.TransientModel):
                     accounts.append(acc_in.payment_account_id.id)
         return accounts
 
+    operating_unit_ids = fields.Many2many(
+        comodel_name="operating.unit",
+    )
     date_from = fields.Date(string='Start Date', default=date.today(), required=True)
     date_to = fields.Date(string='End Date', default=date.today(), required=True)
     target_move = fields.Selection([('posted', 'Posted Entries'),
@@ -69,12 +72,14 @@ class AccountBankBookReport(models.TransientModel):
         result['date_from'] = data['form']['date_from'] or False
         result['date_to'] = data['form']['date_to'] or False
         result['strict_range'] = True if result['date_from'] else False
+        result['operating_unit_ids'] = data['form'].get('operating_unit_ids', [])
+
         return result
 
     def check_report(self):
         data = {}
         data['form'] = self.read(['target_move', 'date_from', 'date_to', 'journal_ids', 'account_ids',
-                                  'sortby', 'initial_balance', 'display_account'])[0]
+                                  'sortby', 'initial_balance', 'display_account', 'operating_unit_ids'])[0]
         comparison_context = self._build_comparison_context(data)
         data['form']['comparison_context'] = comparison_context
         return self.env.ref(

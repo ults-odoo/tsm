@@ -10,12 +10,74 @@ class ReportDayBook(models.AbstractModel):
     _name = 'report.om_account_daily_reports.report_daybook'
     _description = 'Day Book'
 
+    # def _get_account_move_entry(self, accounts, form_data, date):
+    #     cr = self.env.cr
+    #     MoveLine = self.env['account.move.line']
+    #     init_wheres = [""]
+    #
+    #     init_tables, init_where_clause, init_where_params =MoveLine._query_get()
+    #     if init_where_clause.strip():
+    #         init_wheres.append(init_where_clause.strip())
+    #     if form_data['target_move'] == 'posted':
+    #         target_move = "AND m.state = 'posted'"
+    #     else:
+    #         target_move = ''
+    #
+    #     sql = ("""
+    #                 SELECT 0 AS lid,
+    #                       l.account_id AS account_id, l.date AS ldate, j.code AS lcode,
+    #                       l.amount_currency AS amount_currency,l.ref AS lref,l.name AS lname,
+    #                       COALESCE(SUM(l.credit),0.0) AS credit,COALESCE(l.debit,0) AS debit,COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit),0) as balance,
+    #                           m.name AS move_name,
+    #                           c.symbol AS currency_code,
+    #                           p.name AS lpartner_id,
+    #                           m.id AS mmove_id
+    #                         FROM
+    #                           account_move_line l
+    #                           LEFT JOIN account_move m ON (l.move_id = m.id)
+    #                           LEFT JOIN res_currency c ON (l.currency_id = c.id)
+    #                           LEFT JOIN res_partner p ON (l.partner_id = p.id)
+    #                           JOIN account_journal j ON (l.journal_id = j.id)
+    #                           JOIN account_account acc ON (l.account_id = acc.id)
+    #                         WHERE
+    #                           l.account_id IN %s
+    #                           AND l.journal_id IN %s """ + target_move + """
+    #                           AND l.date = %s
+    #                         GROUP BY
+    #                           l.id,
+    #                           l.account_id,
+    #                           l.date,
+    #                           m.name,
+    #                           m.id,
+    #                           p.name,
+    #                           c.symbol,
+    #                           j.code,
+    #                           l.ref
+    #                         ORDER BY
+    #                           l.date DESC
+    #                  """)
+    #
+    #     where_params = (tuple(accounts.ids), tuple(form_data['journal_ids']), date)
+    #     cr.execute(sql, where_params)
+    #     data = cr.dictfetchall()
+    #     res = {}
+    #     debit = credit = balance = 0.00
+    #     for line in data:
+    #         debit += line['debit']
+    #         credit += line['credit']
+    #         balance += line['balance']
+    #     res['debit'] = debit
+    #     res['credit'] = credit
+    #     res['balance'] = balance
+    #     res['lines'] = data
+    #     return res
+
     def _get_account_move_entry(self, accounts, form_data, date):
         cr = self.env.cr
         MoveLine = self.env['account.move.line']
         init_wheres = [""]
 
-        init_tables, init_where_clause, init_where_params =MoveLine._query_get()
+        init_tables, init_where_clause, init_where_params = MoveLine._query_get()
         if init_where_clause.strip():
             init_wheres.append(init_where_clause.strip())
         if form_data['target_move'] == 'posted':
@@ -23,11 +85,20 @@ class ReportDayBook(models.AbstractModel):
         else:
             target_move = ''
 
-        sql = ("""
+        # Handle operating units
+        operating_units = form_data.get('operating_unit_ids', [])
+        if operating_units:
+            operating_units = tuple(operating_units)
+            operating_unit_filter = "AND l.operating_unit_id IN %s"
+        else:
+            operating_unit_filter = ""
+
+        sql = (f"""
                     SELECT 0 AS lid, 
                           l.account_id AS account_id, l.date AS ldate, j.code AS lcode, 
-                          l.amount_currency AS amount_currency,l.ref AS lref,l.name AS lname, 
-                          COALESCE(SUM(l.credit),0.0) AS credit,COALESCE(l.debit,0) AS debit,COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit),0) as balance, 
+                          l.amount_currency AS amount_currency, l.ref AS lref, l.name AS lname, 
+                          COALESCE(SUM(l.credit),0.0) AS credit, COALESCE(l.debit,0) AS debit, 
+                          COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit),0) as balance, 
                               m.name AS move_name, 
                               c.symbol AS currency_code, 
                               p.name AS lpartner_id, 
@@ -41,7 +112,7 @@ class ReportDayBook(models.AbstractModel):
                               JOIN account_account acc ON (l.account_id = acc.id) 
                             WHERE 
                               l.account_id IN %s 
-                              AND l.journal_id IN %s """ + target_move + """ 
+                              AND l.journal_id IN %s """ + target_move + operating_unit_filter + """ 
                               AND l.date = %s 
                             GROUP BY 
                               l.id, 
@@ -57,8 +128,12 @@ class ReportDayBook(models.AbstractModel):
                               l.date DESC
                      """)
 
-        where_params = (tuple(accounts.ids), tuple(form_data['journal_ids']), date)
-        cr.execute(sql, where_params)
+        where_params = [tuple(accounts.ids), tuple(form_data['journal_ids'])]
+        if operating_units:
+            where_params.append(operating_units)
+        where_params.append(date)
+
+        cr.execute(sql, tuple(where_params))
         data = cr.dictfetchall()
         res = {}
         debit = credit = balance = 0.00
