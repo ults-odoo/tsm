@@ -3,7 +3,7 @@
 
 {
     'name': 'Cash Book, Day Book, Bank Book Financial Reports',
-    'version': '16.0.1.0.5',
+    'version': '16.0.1.0.6',
     'category': 'Invoicing Management',
     'summary': 'Cash Book, Day Book and Bank Book Report For Odoo 16',
     'description': 'Cash Book, Day Book and Bank Book Report For Odoo 16',
@@ -14,7 +14,7 @@
     'maintainer': 'Odoo Mates',
     'support': 'odoomates@gmail.com',
     'website': 'https://www.odoomates.tech',
-    'depends': ['account', 'accounting_pdf_reports', 'account_operating_unit'],
+    'depends': ['account', 'accounting_pdf_reports', 'account_operating_unit', 'date_range'],
     'live_test_url': '',
     'demo': [],
     'data': [

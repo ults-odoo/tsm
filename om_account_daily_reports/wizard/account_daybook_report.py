@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from odoo import fields, models, _
+from odoo import fields, models, _, api
 from datetime import date
+from odoo.exceptions import UserError, ValidationError
+
 
 
 class AccountDayBookReport(models.TransientModel):
@@ -11,8 +13,9 @@ class AccountDayBookReport(models.TransientModel):
     operating_unit_ids = fields.Many2many(
         comodel_name="operating.unit",
     )
-    date_from = fields.Date(string='Start Date', default=date.today(), required=True)
-    date_to = fields.Date(string='End Date', default=date.today(), required=True)
+    date_range_id = fields.Many2one(comodel_name="date.range", string="Date range")
+    date_from = fields.Date(string='Start Date', required=True)
+    date_to = fields.Date(string='End Date', required=True)
     target_move = fields.Selection([('posted', 'Posted Entries'),
                                     ('all', 'All Entries')], string='Target Moves', required=True,
                                    default='posted')
@@ -20,6 +23,34 @@ class AccountDayBookReport(models.TransientModel):
                                    default=lambda self: self.env['account.journal'].search([]))
     account_ids = fields.Many2many('account.account', 'account_account_daybook_report', 'report_line_id',
                                    'account_id', 'Accounts')
+
+    @api.onchange("date_from", "date_to", "date_range_id")
+    def _check_dates_within_date_range(self):
+        for rec in self:
+            if rec.date_range_id:
+                date_range = rec.date_range_id
+                if rec.date_from and (
+                        rec.date_from < date_range.date_start
+                        or rec.date_from > date_range.date_end
+                ):
+                    raise ValidationError(
+                        _("The 'Start Date' must be within the date range: %s to %s.")
+                        % (date_range.date_start, date_range.date_end)
+                    )
+                if rec.date_to and (
+                        rec.date_to < date_range.date_start
+                        or rec.date_to > date_range.date_end
+                ):
+                    raise ValidationError(
+                        _("The 'End Date' must be within the date range: %s to %s.")
+                        % (date_range.date_start, date_range.date_end)
+                    )
+
+    @api.onchange("date_range_id")
+    def onchange_date_range_id(self):
+        """Handle date range change."""
+        self.date_from = self.date_range_id.date_start
+        self.date_to = self.date_range_id.date_end
 
     def _build_comparison_context(self, data):
         result = {}
