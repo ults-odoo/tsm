@@ -48,11 +48,11 @@
                         <thead>
                             <tr class="text-center" style="background-color: #4c4c4c; color: white;">
                                 <th style="padding: 10px;">Date</th>
-                                <th style="padding: 10px;">JRNL</th>
+                                <th style="padding: 10px;">Voucher Type</th>
                                 <th style="padding: 10px;">Partner</th>
                                 <th style="padding: 10px;">Ref</th>
-                                <th style="padding: 10px;">Move</th>
-                                <th style="padding: 10px;">Entry Label</th>
+                                <th style="padding: 10px;">Voucher No</th>
+                                <th style="padding: 10px;">Narration</th>
                                 <th style="padding: 10px;">Debit</th>
                                 <th style="padding: 10px;">Credit</th>
                                 <th style="padding: 10px;">Balance</th>
