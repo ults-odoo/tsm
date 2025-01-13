@@ -22,6 +22,7 @@
                     <group>
                         <field name="date_range_id"/>
                         <field name="date_from"/>
+                        <field name="report_type"/>
                     </group>
                     <group>
                         <field name="operating_unit_ids" widget="many2many_tags"/>

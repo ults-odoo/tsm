@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from email.policy import default
 
 from odoo import fields, models, _, api
 from datetime import date
@@ -13,6 +14,10 @@ class AccountDayBookReport(models.TransientModel):
     operating_unit_ids = fields.Many2many(
         comodel_name="operating.unit",
     )
+    report_type = fields.Selection([
+            ("detailed", "Detailed"),
+            ("summary", "Summary"),
+        ], string="Report Type", default='detailed')
     date_range_id = fields.Many2one(comodel_name="date.range", string="Date range")
     date_from = fields.Date(string='Start Date', required=True)
     date_to = fields.Date(string='End Date', required=True)

@@ -54,6 +54,10 @@ class AccountCashBookReport(models.TransientModel):
                                      help='If you selected date, this field allow you to add a row to'
                                           ' display the amount of debit/credit/balance that precedes '
                                           'the filter you\'ve set.')
+    report_type = fields.Selection([
+        ("detailed", "Detailed"),
+        ("summary", "Summary"),
+    ], string="Report Type", default='detailed')
 
     @api.onchange("date_from", "date_to", "date_range_id")
     def _check_dates_within_date_range(self):
