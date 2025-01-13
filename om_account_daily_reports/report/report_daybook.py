@@ -95,7 +95,7 @@ class ReportDayBook(models.AbstractModel):
 
         sql = (f"""
                     SELECT 0 AS lid, 
-                          l.account_id AS account_id, l.date AS ldate, j.code AS lcode, 
+                          l.account_id AS account_id, acc.name AS account_name, l.date AS ldate, j.code AS lcode, 
                           l.amount_currency AS amount_currency, l.ref AS lref, l.name AS lname, 
                           COALESCE(SUM(l.credit),0.0) AS credit, COALESCE(l.debit,0) AS debit, 
                           COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit),0) as balance, 
@@ -117,6 +117,7 @@ class ReportDayBook(models.AbstractModel):
                             GROUP BY 
                               l.id, 
                               l.account_id, 
+                              acc.name,
                               l.date, 
                               m.name, 
                               m.id, 
@@ -180,6 +181,7 @@ class ReportDayBook(models.AbstractModel):
                     'balance': accounts_res['balance'],
                     'move_lines': accounts_res['lines']
                 })
+        print(record,'+++++++++++++++++++++')
         return {
             'doc_ids': docids,
             'doc_model': model,
