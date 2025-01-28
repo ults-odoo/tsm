@@ -4,6 +4,7 @@ from email.policy import default
 from odoo import fields, models, _, api
 from datetime import date
 from odoo.exceptions import UserError, ValidationError
+import urllib
 
 
 
@@ -67,13 +68,20 @@ class AccountDayBookReport(models.TransientModel):
         return result
 
     def check_report(self):
-        data = {}
-        data['form'] = self.read(['target_move', 'date_from', 'date_to', 'journal_ids', 'account_ids', 'operating_unit_ids'])[0]
-        comparison_context = self._build_comparison_context(data)
-        data['form']['comparison_context'] = comparison_context
-        return self.env.ref(
-            'om_account_daily_reports.action_report_day_book').report_action(self,
-                                                                     data=data)
+        self.ensure_one()
+        data = {
+            'target_move': self.target_move,
+            'date_from': self.date_from,
+            'date_to': self.date_to,
+            'journal_ids': str(self.journal_ids.ids),
+            'operating_unit_ids': str(self.operating_unit_ids.ids),
+        }
+
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/daybook_report?' + urllib.parse.urlencode(data),
+            'target': 'new',
+        }
 
 
 

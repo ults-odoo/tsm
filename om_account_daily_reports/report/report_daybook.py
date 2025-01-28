@@ -181,7 +181,6 @@ class ReportDayBook(models.AbstractModel):
                     'balance': accounts_res['balance'],
                     'move_lines': accounts_res['lines']
                 })
-        print(record,'+++++++++++++++++++++')
         return {
             'doc_ids': docids,
             'doc_model': model,

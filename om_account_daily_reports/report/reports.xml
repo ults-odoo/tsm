@@ -5,7 +5,7 @@
         <record id="action_report_day_book" model="ir.actions.report">
             <field name="name">Day Book</field>
             <field name="model">account.daybook.report</field>
-            <field name="report_type">qweb-html</field>
+            <field name="report_type">qweb-pdf</field>
             <field name="report_name">om_account_daily_reports.report_daybook</field>
             <field name="report_file">om_account_daily_reports.report_daybook</field>
         </record>
