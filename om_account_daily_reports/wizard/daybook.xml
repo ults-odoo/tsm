@@ -15,7 +15,7 @@
                     <field name="report_type"/>
                 </group>
                 <group>
-                    <field name="operating_unit_ids" widget="many2many_tags"/>
+                    <field name="operating_unit_id" required="1"/>
                     <field name="date_to"/>
                     <field name="journal_ids" widget="many2many_tags" invisible="1"/>
                     <field name="account_ids" widget="many2many_tags" invisible="1"/>

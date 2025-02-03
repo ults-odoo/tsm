@@ -85,53 +85,51 @@ class ReportDayBook(models.AbstractModel):
         else:
             target_move = ''
 
-        # Handle operating units
-        operating_units = form_data.get('operating_unit_ids', [])
-        if operating_units:
-            operating_units = tuple(operating_units)
-            operating_unit_filter = "AND l.operating_unit_id IN %s"
-        else:
-            operating_unit_filter = ""
-
+        # Handle operating unit - Ensure we have a clean integer ID
+        operating_unit_id = form_data.get('operating_unit_id')
+        if isinstance(operating_unit_id, (list, tuple)):
+            operating_unit_id = operating_unit_id[0]
+        operating_unit_filter = "AND l.operating_unit_id = %s" if operating_unit_id else ""
         sql = (f"""
-                    SELECT 0 AS lid, 
-                          l.account_id AS account_id, acc.name AS account_name, l.date AS ldate, j.code AS lcode, 
-                          l.amount_currency AS amount_currency, l.ref AS lref, l.name AS lname, 
-                          COALESCE(SUM(l.credit),0.0) AS credit, COALESCE(l.debit,0) AS debit, 
-                          COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit),0) as balance, 
-                              m.name AS move_name, 
-                              c.symbol AS currency_code, 
-                              p.name AS lpartner_id, 
-                              m.id AS mmove_id 
-                            FROM 
-                              account_move_line l 
-                              LEFT JOIN account_move m ON (l.move_id = m.id) 
-                              LEFT JOIN res_currency c ON (l.currency_id = c.id) 
-                              LEFT JOIN res_partner p ON (l.partner_id = p.id) 
-                              JOIN account_journal j ON (l.journal_id = j.id) 
-                              JOIN account_account acc ON (l.account_id = acc.id) 
-                            WHERE 
-                              l.account_id IN %s 
-                              AND l.journal_id IN %s """ + target_move + operating_unit_filter + """ 
-                              AND l.date = %s 
-                            GROUP BY 
-                              l.id, 
-                              l.account_id, 
-                              acc.name,
-                              l.date, 
-                              m.name, 
-                              m.id, 
-                              p.name, 
-                              c.symbol, 
-                              j.code, 
-                              l.ref 
-                            ORDER BY 
-                              l.date DESC
-                     """)
+                        SELECT l.id AS lid,  -- Include the line ID
+                              l.account_id AS account_id, acc.name AS account_name, l.date AS ldate, j.code AS lcode, 
+                              l.amount_currency AS amount_currency, l.ref AS lref, l.name AS lname, 
+                              COALESCE(SUM(l.credit),0.0) AS credit, COALESCE(l.debit,0) AS debit, 
+                              COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit),0) as balance, 
+                                  m.name AS move_name, 
+                                  c.symbol AS currency_code, 
+                                  p.name AS lpartner_id, 
+                                  m.id AS mmove_id 
+                                FROM 
+                                  account_move_line l 
+                                  LEFT JOIN account_move m ON (l.move_id = m.id) 
+                                  LEFT JOIN res_currency c ON (l.currency_id = c.id) 
+                                  LEFT JOIN res_partner p ON (l.partner_id = p.id) 
+                                  JOIN account_journal j ON (l.journal_id = j.id) 
+                                  JOIN account_account acc ON (l.account_id = acc.id) 
+                                WHERE 
+                                  l.account_id IN %s 
+                                  AND l.journal_id IN %s """ + target_move + operating_unit_filter + """ 
+                                  AND l.date = %s 
+                                GROUP BY 
+                                  l.id,  -- Group by the line ID
+                                  l.account_id, 
+                                  acc.name,
+                                  l.date, 
+                                  m.name, 
+                                  m.id, 
+                                  p.name, 
+                                  c.symbol, 
+                                  j.code, 
+                                  l.ref 
+                                ORDER BY 
+                                  l.date DESC
+                         """)
 
         where_params = [tuple(accounts.ids), tuple(form_data['journal_ids'])]
-        if operating_units:
-            where_params.append(operating_units)
+        if operating_unit_id:
+
+            where_params.append(int(operating_unit_id))  # Ensure it's an integer
         where_params.append(date)
 
         cr.execute(sql, tuple(where_params))

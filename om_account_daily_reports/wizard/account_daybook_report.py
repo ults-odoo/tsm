@@ -12,8 +12,9 @@ class AccountDayBookReport(models.TransientModel):
     _name = "account.daybook.report"
     _description = "Day Book Report"
 
-    operating_unit_ids = fields.Many2many(
+    operating_unit_id = fields.Many2one(  # Changed from operating_unit_ids to operating_unit_id
         comodel_name="operating.unit",
+        string="Operating Unit"
     )
     report_type = fields.Selection([
             ("detailed", "Detailed"),
@@ -64,24 +65,21 @@ class AccountDayBookReport(models.TransientModel):
         result['state'] = 'target_move' in data['form'] and data['form']['target_move'] or ''
         result['date_from'] = data['form']['date_from']
         result['date_to'] = data['form']['date_to']
-        result['operating_unit_ids'] = data['form'].get('operating_unit_ids', [])
+        # Pass only the ID of operating unit
+        result['operating_unit_id'] = data['form'].get('operating_unit_id', False) and data['form']['operating_unit_id'][0] if isinstance(data['form'].get('operating_unit_id'), (list, tuple)) else data['form'].get('operating_unit_id')
         return result
 
     def check_report(self):
-        self.ensure_one()
-        data = {
-            'target_move': self.target_move,
-            'date_from': self.date_from,
-            'date_to': self.date_to,
-            'journal_ids': str(self.journal_ids.ids),
-            'operating_unit_ids': str(self.operating_unit_ids.ids),
-        }
-
-        return {
-            'type': 'ir.actions.act_url',
-            'url': '/daybook_report?' + urllib.parse.urlencode(data),
-            'target': 'new',
-        }
+        data = {}
+        # Read only the ID for operating_unit_id
+        data['form'] = self.read(['target_move', 'date_from', 'date_to', 'journal_ids', 'account_ids', 'operating_unit_id'])[0]
+        # Ensure we get only the ID from the Many2one field
+        if data['form'].get('operating_unit_id'):
+            if isinstance(data['form']['operating_unit_id'], (list, tuple)):
+                data['form']['operating_unit_id'] = data['form']['operating_unit_id'][0]
+        comparison_context = self._build_comparison_context(data)
+        data['form']['comparison_context'] = comparison_context
+        return self.env.ref('om_account_daily_reports.action_report_day_book').report_action(self, data=data)
 
 
 

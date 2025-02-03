@@ -28,8 +28,9 @@ class AccountBankBookReport(models.TransientModel):
                     accounts.append(acc_in.payment_account_id.id)
         return accounts
 
-    operating_unit_ids = fields.Many2many(
+    operating_unit_id = fields.Many2one(  # Changed from operating_unit_ids to operating_unit_id
         comodel_name="operating.unit",
+        string="Operating Unit"
     )
     date_range_id = fields.Many2one(comodel_name="date.range", string="Date range")
     date_from = fields.Date(string='Start Date', default=date.today(), required=True)
@@ -107,14 +108,19 @@ class AccountBankBookReport(models.TransientModel):
         result['date_from'] = data['form']['date_from'] or False
         result['date_to'] = data['form']['date_to'] or False
         result['strict_range'] = True if result['date_from'] else False
-        result['operating_unit_ids'] = data['form'].get('operating_unit_ids', [])
+        result['operating_unit_id'] = data['form'].get('operating_unit_id', False) and \
+                                      data['form']['operating_unit_id'][0] if isinstance(
+            data['form'].get('operating_unit_id'), (list, tuple)) else data['form'].get('operating_unit_id')
 
         return result
 
     def check_report(self):
         data = {}
         data['form'] = self.read(['target_move', 'date_from', 'date_to', 'journal_ids', 'account_ids',
-                                  'sortby', 'initial_balance', 'display_account', 'operating_unit_ids'])[0]
+                                  'sortby', 'initial_balance', 'display_account', 'operating_unit_id'])[0]
+        if data['form'].get('operating_unit_id'):
+            if isinstance(data['form']['operating_unit_id'], (list, tuple)):
+                data['form']['operating_unit_id'] = data['form']['operating_unit_id'][0]
         comparison_context = self._build_comparison_context(data)
         data['form']['comparison_context'] = comparison_context
         return self.env.ref(
